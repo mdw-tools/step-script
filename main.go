@@ -30,7 +30,7 @@ func main() {
 		log.Fatal("Please provide at least one command to run.")
 	}
 
-	log.Println("step-script @ ", Version)
+	log.Println("step-script @", Version)
 
 	for _, command := range flag.Args() {
 		line := strings.TrimSpace(command)
@@ -43,10 +43,11 @@ func main() {
 			log.Fatal("Could not parse command:", command)
 		}
 
-		fmt.Println("About to run command:")
-		fmt.Println("\t" + line)
-		fmt.Print("<ENTER> to continue")
+		log.Println("\nAbout to run command:", line)
+		fmt.Print("\n<ENTER> to continue")
 		bufio.NewScanner(os.Stdin).Scan()
+
+		log.Println()
 
 		command := exec.Command(args[0], args[1:]...)
 		command.Stdout = os.Stdout
@@ -57,4 +58,6 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+
+	log.Printf("Finished running %d commands.", len(flag.Args()))
 }
