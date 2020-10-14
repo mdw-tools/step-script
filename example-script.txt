@@ -1,0 +1,2 @@
+go env | grep GOPATH
+cat Makefile | head -n 1
