@@ -19,7 +19,7 @@ func main() {
 
 	flag.Usage = func() {
 		log.Println("" +
-			"This script accepts file paths in non-flag args which contain commands that will be executed (w/ bash -c '...'), one at a time, each after a confirmation (<ENTER>).",
+			"This script accepts file paths in non-flag args which contain commands that will be executed (w/ bash -c '...'), one at a time, each after a prompt.",
 		)
 		flag.PrintDefaults()
 	}
@@ -47,8 +47,11 @@ func main() {
 				continue
 			}
 
-			fmt.Print("\n$ ", line, "    # <ENTER> to execute")
-			bufio.NewScanner(os.Stdin).Scan()
+			fmt.Print("\n$ ", line, "    # Execute? Y/n")
+			if !yes(true) {
+				log.Println("Skipping step...")
+				continue
+			}
 
 			log.Println()
 
@@ -66,4 +69,15 @@ func main() {
 	}
 
 	log.Printf("Finished running %d commands.", commandsExecuted)
+}
+
+func yes(byDefault bool) bool {
+	response := strings.ToLower(strings.TrimSpace(prompt()))
+	return (byDefault && response == "") || response == "y" || response == "yes"
+}
+
+func prompt() string {
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	return scanner.Text()
 }
