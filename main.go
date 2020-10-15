@@ -47,7 +47,7 @@ func main() {
 				continue
 			}
 
-			fmt.Print("\n$ ", line, "    # Execute? Y/n")
+			fmt.Print("\n$ ", line, "    # Execute? [Y/n] ")
 			if !yes(true) {
 				log.Println("Skipping step...")
 				continue
