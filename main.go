@@ -48,21 +48,14 @@ func main() {
 			}
 
 			fmt.Print("\n$ ", line, "    # Execute? [Y/n] ")
-			if !yes(true) {
+			if !yes() {
 				log.Println("Skipping step...")
 				continue
 			}
 
 			log.Println()
 
-			command := exec.Command("bash", "-c", line)
-			command.Stdout = os.Stdout
-			command.Stderr = os.Stderr
-
-			err = command.Run()
-			if err != nil {
-				log.Fatal(err)
-			}
+			shell(line)
 
 			commandsExecuted++
 		}
@@ -71,9 +64,20 @@ func main() {
 	log.Printf("Finished running %d commands.", commandsExecuted)
 }
 
-func yes(byDefault bool) bool {
+func shell(line string) {
+	command := exec.Command("bash", "-c", line)
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+
+	err := command.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func yes() bool {
 	response := strings.ToLower(strings.TrimSpace(prompt()))
-	return (byDefault && response == "") || response == "y" || response == "yes"
+	return response == "" || response == "y" || response == "yes"
 }
 
 func prompt() string {
