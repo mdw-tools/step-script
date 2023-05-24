@@ -66,6 +66,7 @@ func main() {
 
 func shell(line string) {
 	command := exec.Command("bash", "-c", line)
+	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 
