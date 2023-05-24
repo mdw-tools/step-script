@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -68,8 +67,8 @@ func main() {
 func shell(line string) {
 	command := exec.Command("bash", "-c", line)
 	command.Stdin = os.Stdin
-	command.Stdout = NewIndentWriter(os.Stdout)
-	command.Stderr = NewIndentWriter(os.Stderr)
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
 
 	err := command.Run()
 	if err != nil {
@@ -86,17 +85,4 @@ func prompt() string {
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	return scanner.Text()
-}
-
-type IndentWriter struct{ io.Writer }
-
-func NewIndentWriter(out io.Writer) *IndentWriter {
-	return &IndentWriter{Writer: out}
-}
-
-func (this IndentWriter) Write(p []byte) (n int, err error) {
-	lines := strings.Split(string(p), "\n")
-	content := "> " + strings.Join(lines, "\n> ")
-	_, err = io.WriteString(this.Writer, content)
-	return len(p), err
 }
