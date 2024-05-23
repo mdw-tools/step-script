@@ -2,9 +2,9 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -16,6 +16,8 @@ var Version = "dev"
 func main() {
 	log.SetFlags(0)
 
+	stdin := false
+	flag.BoolVar(&stdin, "stdin", stdin, "When set, read from stdin first, then any files named by non-flag args.")
 	flag.Usage = func() {
 		log.Println("" +
 			"This script accepts file paths in non-flag args which contain commands that will be executed (w/ bash -c '...'), one at a time, each after a prompt.",
@@ -26,41 +28,55 @@ func main() {
 
 	log.Println("step-script @", Version)
 
-	paths := flag.Args()
-
-	if len(paths) == 0 {
-		log.Fatalln("At least one path is required.")
+	if stdin {
+		commandsExecuted := executeSteps(os.Stdin)
+		log.Printf("Finished running %d commands from stdin.", commandsExecuted)
 	}
 
-	commandsExecuted := 0
+	paths := flag.Args()
+	if !stdin && len(paths) == 0 {
+		log.Fatalln("At least one path is required when not reading from stdin.")
+	}
+
 	for _, path := range paths {
-		content, err := os.ReadFile(path)
+		file, err := os.Open(path)
 		if err != nil {
 			log.Fatalln(err)
 		}
-		scanner := bufio.NewScanner(bytes.NewReader(content))
-		for scanner.Scan() {
-			line := strings.TrimSpace(scanner.Text())
-
-			if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") {
-				continue
-			}
-
-			fmt.Print("\n$ ", line, "    # Execute? [Y/n] ")
-			if !yes() {
-				log.Println("Skipping step...")
-				continue
-			}
-
-			log.Println()
-
-			shell(line)
-
-			commandsExecuted++
-		}
+		commandsExecuted := executeSteps(file)
+		_ = file.Close()
+		log.Printf("Finished running %d commands in %s.", commandsExecuted, path)
 	}
+}
 
-	log.Printf("Finished running %d commands.", commandsExecuted)
+func executeSteps(reader io.ReadCloser) (result int) {
+	defer func() { _ = reader.Close() }()
+
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+
+		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") {
+			continue
+		}
+
+		fmt.Print("\n$ ", line, "    # Execute? [Y/n] ")
+		if !yes() {
+			log.Println("Skipping step...")
+			continue
+		}
+
+		log.Println()
+
+		shell(line)
+
+		result++
+	}
+	err := scanner.Err()
+	if err != nil {
+		log.Fatalln("scanner err:", err)
+	}
+	return result
 }
 
 func shell(line string) {
