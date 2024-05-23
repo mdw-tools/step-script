@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -35,7 +34,7 @@ func main() {
 
 	commandsExecuted := 0
 	for _, path := range paths {
-		content, err := ioutil.ReadFile(path)
+		content, err := os.ReadFile(path)
 		if err != nil {
 			log.Fatalln(err)
 		}
